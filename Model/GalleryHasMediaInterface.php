@@ -14,11 +14,6 @@ namespace Sonata\MediaBundle\Model;
 interface GalleryHasMediaInterface
 {
     /**
-     * @return string
-     */
-    public function __toString();
-
-    /**
      * @param bool $enabled
      */
     public function setEnabled($enabled);
@@ -79,4 +74,9 @@ interface GalleryHasMediaInterface
      * @return \DateTime
      */
     public function getCreatedAt();
+
+    /**
+     * @return string
+     */
+    public function __toString();
 }

@@ -25,7 +25,7 @@ Retrieve the bundle with composer:
 
 .. code-block:: bash
 
-    $ composer require sonata-project/media-bundle
+    $ php composer.phar require sonata-project/media-bundle --no-update
 
 Register these bundles in your AppKernel:
 
@@ -132,7 +132,7 @@ Doctrine PHPCR:
 
             filesystem:
                 local:
-                    directory:  "%kernel.root_dir%/../web/uploads/media"
+                    directory:  %kernel.root_dir%/../web/uploads/media
                     create:     false
 
 .. note::

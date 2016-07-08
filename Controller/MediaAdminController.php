@@ -29,10 +29,10 @@ class MediaAdminController extends Controller
 
         if (!$request->get('provider') && $request->isMethod('get')) {
             return $this->render('SonataMediaBundle:MediaAdmin:select_provider.html.twig', array(
-                'providers' => $this->get('sonata.media.pool')->getProvidersByContext($this->get('request')->get('context', $this->get('sonata.media.pool')->getDefaultContext())),
+                'providers'     => $this->get('sonata.media.pool')->getProvidersByContext($this->get('request')->get('context', $this->get('sonata.media.pool')->getDefaultContext())),
                 'base_template' => $this->getBaseTemplate(),
-                'admin' => $this->admin,
-                'action' => 'create',
+                'admin'         => $this->admin,
+                'action'        => 'create',
             ));
         }
 
@@ -44,7 +44,7 @@ class MediaAdminController extends Controller
      */
     public function render($view, array $parameters = array(), Response $response = null, Request $request = null)
     {
-        $parameters['media_pool'] = $this->container->get('sonata.media.pool');
+        $parameters['media_pool']            = $this->container->get('sonata.media.pool');
         $parameters['persistent_parameters'] = $this->admin->getPersistentParameters();
 
         return parent::render($view, $parameters, $response, $request);
@@ -55,6 +55,7 @@ class MediaAdminController extends Controller
      */
     public function listAction(Request $request = null)
     {
+        $category = null;
         if (false === $this->admin->isGranted('LIST')) {
             throw new AccessDeniedException();
         }
@@ -69,7 +70,7 @@ class MediaAdminController extends Controller
 
         // set the default context
         if (!$filters || !array_key_exists('context', $filters)) {
-            $context = $this->admin->getPersistentParameter('context', $this->get('sonata.media.pool')->getDefaultContext());
+            $context = $this->admin->getPersistentParameter('context',  $this->get('sonata.media.pool')->getDefaultContext());
         } else {
             $context = $filters['context']['value'];
         }
@@ -77,21 +78,24 @@ class MediaAdminController extends Controller
         $datagrid->setValue('context', null, $context);
 
         // retrieve the main category for the tree view
-        $category = $this->container->get('sonata.classification.manager.category')->getRootCategory($context);
-
-        if (!$filters) {
-            $datagrid->setValue('category', null, $category);
+        if ($this->container->has('sonata.media.manager.category')) {
+            $category = $this->container->get('sonata.media.manager.category')->getRootCategory($context);
         }
-        if ($request->get('category')) {
-            $categoryByContext = $this->container->get('sonata.classification.manager.category')->findOneBy(array(
-                'id' => (int) $request->get('category'),
+
+        if (null !== $category && !$filters) {
+            $datagrid->setValue('category', null, $category->getId());
+        }
+
+        if ($this->container->has('sonata.media.manager.category') && $request->get('category')) {
+            $contextInCategory = $this->container->get('sonata.media.manager.category')->findBy(array(
+                'id'      => (int) $request->get('category'),
                 'context' => $context,
             ));
 
-            if (!empty($categoryByContext)) {
-                $datagrid->setValue('category', null, $categoryByContext);
+            if (!empty($contextInCategory)) {
+                $datagrid->setValue('category', null, $request->get('category'));
             } else {
-                $datagrid->setValue('category', null, $category);
+                $datagrid->setValue('category', null, $category->getId());
             }
         }
 
@@ -101,11 +105,11 @@ class MediaAdminController extends Controller
         $this->get('twig')->getExtension('form')->renderer->setTheme($formView, $this->admin->getFilterTheme());
 
         return $this->render($this->admin->getTemplate('list'), array(
-            'action' => 'list',
-            'form' => $formView,
-            'datagrid' => $datagrid,
+            'action'        => 'list',
+            'form'          => $formView,
+            'datagrid'      => $datagrid,
             'root_category' => $category,
-            'csrf_token' => $this->getCsrfToken('sonata.batch'),
+            'csrf_token'    => $this->getCsrfToken('sonata.batch'),
         ));
     }
 }

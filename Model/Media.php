@@ -12,9 +12,7 @@
 namespace Sonata\MediaBundle\Model;
 
 use Imagine\Image\Box;
-use Sonata\ClassificationBundle\Model\CategoryInterface;
-use Symfony\Component\Validator\Context\ExecutionContextInterface;
-use Symfony\Component\Validator\ExecutionContextInterface as LegacyExecutionContextInterface;
+use Symfony\Component\Validator\ExecutionContextInterface;
 
 abstract class Media implements MediaInterface
 {
@@ -24,7 +22,7 @@ abstract class Media implements MediaInterface
     protected $name;
 
     /**
-     * @var string
+     * @var text
      */
     protected $description;
 
@@ -64,7 +62,7 @@ abstract class Media implements MediaInterface
     protected $height;
 
     /**
-     * @var float
+     * @var decimal
      */
     protected $length;
 
@@ -94,7 +92,7 @@ abstract class Media implements MediaInterface
     protected $cdnFlushIdentifier;
 
     /**
-     * @var \DateTime
+     * @var datetime
      */
     protected $cdnFlushAt;
 
@@ -104,12 +102,12 @@ abstract class Media implements MediaInterface
     protected $cdnStatus;
 
     /**
-     * @var \DateTime
+     * @var datetime
      */
     protected $updatedAt;
 
     /**
-     * @var \DateTime
+     * @var datetime
      */
     protected $createdAt;
 
@@ -124,7 +122,7 @@ abstract class Media implements MediaInterface
     protected $previousProviderReference;
 
     /**
-     * @var string
+     * @var varchar
      */
     protected $contentType;
 
@@ -142,14 +140,6 @@ abstract class Media implements MediaInterface
      * @var CategoryInterface
      */
     protected $category;
-
-    /**
-     * {@inheritdoc}
-     */
-    public function __toString()
-    {
-        return $this->getName() ?: 'n/a';
-    }
 
     public function prePersist()
     {
@@ -170,11 +160,11 @@ abstract class Media implements MediaInterface
     public static function getStatusList()
     {
         return array(
-            self::STATUS_OK => 'ok',
-            self::STATUS_SENDING => 'sending',
-            self::STATUS_PENDING => 'pending',
-            self::STATUS_ERROR => 'error',
-            self::STATUS_ENCODING => 'encoding',
+            self::STATUS_OK          => 'ok',
+            self::STATUS_SENDING     => 'sending',
+            self::STATUS_PENDING     => 'pending',
+            self::STATUS_ERROR       => 'error',
+            self::STATUS_ENCODING    => 'encoding',
         );
     }
 
@@ -543,8 +533,7 @@ abstract class Media implements MediaInterface
      */
     public function getExtension()
     {
-        // strips off query strings or hashes, which are common in URIs remote references
-        return preg_replace('{(\?|#).*}', '', pathinfo($this->getProviderReference(), PATHINFO_EXTENSION));
+        return pathinfo($this->getProviderReference(), PATHINFO_EXTENSION);
     }
 
     /**
@@ -590,6 +579,14 @@ abstract class Media implements MediaInterface
     /**
      * {@inheritdoc}
      */
+    public function __toString()
+    {
+        return $this->getName() ?: 'n/a';
+    }
+
+    /**
+     * {@inheritdoc}
+     */
     public function setGalleryHasMedias($galleryHasMedias)
     {
         $this->galleryHasMedias = $galleryHasMedias;
@@ -612,23 +609,12 @@ abstract class Media implements MediaInterface
     }
 
     /**
-     * @param ExecutionContextInterface|LegacyExecutionContextInterface $context
+     * @param ExecutionContextInterface $context
      */
-    public function isStatusErroneous($context)
+    public function isStatusErroneous(ExecutionContextInterface $context)
     {
         if ($this->getBinaryContent() && $this->getProviderStatus() == self::STATUS_ERROR) {
-            // Interface compatibility, the new ExecutionContextInterface should be typehinted when support for Symfony <2.5 is dropped
-            if (!$context instanceof ExecutionContextInterface && !$context instanceof LegacyExecutionContextInterface) {
-                throw new \InvalidArgumentException('Argument 1 should be an instance of Symfony\Component\Validator\ExecutionContextInterface or Symfony\Component\Validator\Context\ExecutionContextInterface');
-            }
-
-            if ($context instanceof LegacyExecutionContextInterface) {
-                $context->addViolationAt('binaryContent', 'invalid', array(), null);
-            } else {
-                $context->buildViolation('invalid')
-                   ->atPath('binaryContent')
-                   ->addViolation();
-            }
+            $context->addViolationAt('binaryContent', 'invalid', array(), null);
         }
     }
 
@@ -643,7 +629,7 @@ abstract class Media implements MediaInterface
     /**
      * @param CategoryInterface $category|null
      */
-    public function setCategory(CategoryInterface $category = null)
+    public function setCategory($category = null)
     {
         $this->category = $category;
     }

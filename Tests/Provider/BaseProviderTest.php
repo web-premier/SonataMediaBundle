@@ -203,6 +203,14 @@ class TestProvider extends BaseProvider
     /**
      * {@inheritdoc}
      */
+    protected function doTransform(MediaInterface $media)
+    {
+        // TODO: Implement doTransform() method.
+    }
+
+    /**
+     * {@inheritdoc}
+     */
     public function buildMediaType(FormBuilder $formBuilder)
     {
         // TODO: Implement buildMediaType() method.
@@ -214,13 +222,5 @@ class TestProvider extends BaseProvider
     public function updateMetadata(MediaInterface $media, $force = false)
     {
         // TODO: Implement updateMetadata() method.
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    protected function doTransform(MediaInterface $media)
-    {
-        // TODO: Implement doTransform() method.
     }
 }

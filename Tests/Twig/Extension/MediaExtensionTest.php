@@ -41,6 +41,13 @@ class MediaExtensionTest extends \PHPUnit_Framework_TestCase
      */
     private $media;
 
+    public function setUp()
+    {
+        if (false === interface_exists('Symfony\Component\Validator\ExecutionContextInterface')) {
+            $this->markTestSkipped('Test only available for < SF3.0');
+        }
+    }
+
     public function testThumbnailCanRenderHtmlAttributesGivenByTheProvider()
     {
         $mediaExtension = new MediaExtension($this->getMediaService(), $this->getMediaManager());
@@ -48,18 +55,11 @@ class MediaExtensionTest extends \PHPUnit_Framework_TestCase
 
         $media = $this->getMedia();
         $format = 'png';
-        $options = array(
-            'title' => 'Test title',
-            'alt' => 'Test title',
-        );
+        $options = array('title' => 'Test title');
 
         $provider = $this->getProvider();
         $provider->expects($this->once())->method('getHelperProperties')->with($media, $format, $options)
-            ->willReturn(array(
-                'title' => 'Test title',
-                'alt' => 'Test title',
-                'data-custom' => 'foo',
-            ));
+            ->willReturn(array('title' => 'Test title', 'data-custom' => 'foo'));
 
         $template = $this->getTemplate();
         $template->expects($this->once())
@@ -67,12 +67,8 @@ class MediaExtensionTest extends \PHPUnit_Framework_TestCase
             ->with(
                 $this->equalTo(
                     array(
-                        'media' => $media,
-                        'options' => array(
-                            'title' => 'Test title',
-                            'alt' => 'Test title',
-                            'data-custom' => 'foo',
-                        ),
+                        'media'   => $media,
+                        'options' => array('title' => 'Test title', 'data-custom' => 'foo'),
                     )
                 )
             );

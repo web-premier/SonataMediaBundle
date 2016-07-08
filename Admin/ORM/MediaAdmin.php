@@ -35,10 +35,13 @@ class MediaAdmin extends Admin
             ->add('enabled')
             ->add('context', null, array(
                 'show_filter' => $this->getPersistentParameter('hide_context') !== true,
-            ), 'choice', $options)
-            ->add('category', null, array(
-                'show_filter' => false,
-            ))
+            ), 'choice', $options);
+
+        if (null !== $this->categoryManager) {
+            $datagridMapper->add('category', null, array('show_filter' => false));
+        }
+
+        $datagridMapper
             ->add('width')
             ->add('height')
             ->add('contentType')
@@ -53,7 +56,7 @@ class MediaAdmin extends Admin
 
         $datagridMapper->add('providerName', 'doctrine_orm_choice', array(
             'field_options' => array(
-                'choices' => $providers,
+                'choices'  => $providers,
                 'required' => false,
                 'multiple' => false,
                 'expanded' => false,

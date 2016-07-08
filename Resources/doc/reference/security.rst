@@ -64,100 +64,98 @@ The Strategy class must implement the ``DownloadStrategyInterface`` which contai
 * isGranted : return true or false depends on the strategy logic
 * getDescription : explains the strategy
 
-Let's create the following strategy : a media can be downloaded only by the given users
+Let's create the following strategy : a media can be downloaded only once per session.
 
 
 .. code-block:: php
 
     <?php
-
     namespace Sonata\MediaBundle\Security;
 
     use Sonata\MediaBundle\Model\MediaInterface;
     use Symfony\Component\HttpFoundation\Request;
-    use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
+    use Symfony\Component\Security\Core\SecurityContextInterface;
     use Symfony\Component\Translation\TranslatorInterface;
+    use Symfony\Component\DependencyInjection\ContainerInterface;
 
-    class UsersDownloadStrategy implements DownloadStrategyInterface
+    class SessionDownloadStrategy implements DownloadStrategyInterface
     {
-        /**
-         * @var TokenStorageInterface
-         */
-        protected $tokenStorage;
+        protected $container;
 
-        /**
-         * @var TranslatorInterface
-         */
         protected $translator;
 
-        /**
-         * @var array
-         */
-        protected $users;
+        protected $times;
+
+        protected $sessionKey = 'sonata/media/session/times';
 
         /**
-         * @param TokenStorageInterface $tokenStorage
-         * @param TranslatorInterface   $translator
-         * @param array                 $users
+         * @param \Symfony\Component\Translation\TranslatorInterface $translator
+         * @param \Symfony\Component\DependencyInjection\ContainerInterface $container
+         * @param int $times
          */
-        public function __construct(TokenStorageInterface $tokenStorage, TranslatorInterface $translator, array $users = array())
+        public function __construct(TranslatorInterface $translator, ContainerInterface $container, $times)
         {
-            $this->tokenStorage = $tokenStorage;
+            $this->times    = $times;
+            $this->container = $container;
             $this->translator = $translator;
-            $this->users = $users;
         }
 
         /**
-         * {@inheritdoc}
+         * @param \Sonata\MediaBundle\Model\MediaInterface $media
+         * @param \Symfony\Component\HttpFoundation\Request $request
+         * @return bool
          */
         public function isGranted(MediaInterface $media, Request $request)
         {
-            return in_array($this->tokenStorage->getToken()->getUsername(), $this->users);
+            if (!$this->container->has('session')) {
+                return false;
+            }
+
+            $times = $this->getSession()->get($this->sessionKey, 0);
+
+            if ($times >= $this->times) {
+                return false;
+            }
+
+            $this->getSession()->set($this->sessionKey, $times++);
+
+            return true;
         }
 
         /**
-         * {@inheritdoc}
+         * @return string
          */
         public function getDescription()
         {
-            return $this->translator->trans(
-                'description.users_download_strategy',
-                array('%users%' => '<code>'.implode('</code>, <code>', $this->users).'</code>'),
-                'SonataMediaBundle'
-            );
+            return $this->translator->trans('description.session_download_strategy', array('%times%' => $this->times), 'SonataMediaBundle');
+        }
+
+        /**
+         * @return \Symfony\Component\HttpFoundation\Session
+         */
+        private function getSession()
+        {
+            return $this->container->get('session');
         }
     }
 
 Let's explain a bit :
 
-* ``isGranted`` : the method test if granted user exists in allowed users for download
+* ``__construct`` : the constructor get the different dependency. As the session belongs to the request scope, it is not possible to inject the service session, so the Container is injected.
+* ``isGranted`` : the method test the number of time the file has been downloaded
 * ``getDescription`` : return a translated message to explain what the current strategy does
+* ``getSession`` : return the session from the container.
 
 
-The last important part is declaring the service.
-
-Open the ``service.xml`` file and add the following lines.
+The last important part is declaring the service. Open the ``service.xml`` file and add the following lines.
 
 .. code-block:: xml
 
-        <service id="sonata.media.security.users_strategy" class="Sonata\MediaBundle\Security\'UsersDownloadStrategy">
-            <argument type="service" id="security.token_storage" />
+        <service id="sonata.media.security.session_strategy" class="Sonata\MediaBundle\Security\SessionDownloadStrategy" >
             <argument type="service" id="translator" />
-            <argument  type="collection">
-                <argument>mozart</argument>
-                <argument>chopin</argument>
-            </argument>
+            <argument type="service" id="service_container" />
+            <argument>1</argument>
         </service>
-
-
-Or open the ``service.yml`` file and add the following lines.
-
-.. code-block:: yaml
-
-    services:
-        sonata.media.security.users_strategy:
-            class:     Sonata\MediaBundle\Security\UsersDownloadStrategy
-            arguments: ['@security.token_storage', '@translator', ['mozart', 'chopin']]
 
 Now the service can be used with a context:
 
@@ -168,7 +166,7 @@ Now the service can be used with a context:
         contexts:
             contents:
                 download:
-                    strategy: sonata.media.security.users_strategy
+                    strategy: sonata.media.security.session_strategy
 
                 providers:
                     - sonata.media.provider.file

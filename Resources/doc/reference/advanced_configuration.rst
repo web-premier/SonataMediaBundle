@@ -11,10 +11,13 @@ Full configuration options:
             media:              Application\Sonata\MediaBundle\Entity\Media
             gallery:            Application\Sonata\MediaBundle\Entity\Gallery
             gallery_has_media:  Application\Sonata\MediaBundle\Entity\GalleryHasMedia
-            category:           Application\Sonata\ClassificationBundle\Entity\Category
+            category:           null # OR Application\Sonata\ClassificationBundle\Entity\Category if exists
+
+        force_disable_category:   false # true IF you really want to disable the relation with category
+        category_manager:   null # if sonata-project/classification exists will set "sonata.classification.manager.category"
+                                 # if you want to define your own category manager you need to implement \Sonata\MediaBundle\Model\CategoryManagerInterface and set the service name here
 
         default_context: default
-        admin_format:   { width: 200 , quality: 90, format: 'jpg'}
         contexts:
             default:  # the default context is mandatory
                 download:
@@ -79,7 +82,7 @@ Full configuration options:
 
         filesystem:
             local:
-                directory:  "%kernel.root_dir%/../web/uploads/media"
+                directory:  %kernel.root_dir%/../web/uploads/media
                 create:     false
 
             ftp:

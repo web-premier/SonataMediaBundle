@@ -69,11 +69,11 @@ class PantherPortal implements CDNInterface
      */
     public function __construct($path, $username, $password, $siteId, $wsdl = 'https://pantherportal.cdnetworks.com/wsdl/flush.wsdl')
     {
-        $this->path = $path;
+        $this->path     = $path;
         $this->username = $username;
         $this->password = $password;
-        $this->siteId = $siteId;
-        $this->wsdl = $wsdl;
+        $this->siteId   = $siteId;
+        $this->wsdl     = $wsdl;
     }
 
     /**
@@ -113,6 +113,20 @@ class PantherPortal implements CDNInterface
     }
 
     /**
+     * Return a SoapClient.
+     *
+     * @return \SoapClient
+     */
+    private function getClient()
+    {
+        if (!$this->client) {
+            $this->client = new \SoapClient($this->wsdl);
+        }
+
+        return $this->client;
+    }
+
+    /**
      * For testing only.
      *
      * @param $client
@@ -128,19 +142,5 @@ class PantherPortal implements CDNInterface
     public function getFlushStatus($identifier)
     {
         // nothing to do
-    }
-
-    /**
-     * Return a SoapClient.
-     *
-     * @return \SoapClient
-     */
-    private function getClient()
-    {
-        if (!$this->client) {
-            $this->client = new \SoapClient($this->wsdl);
-        }
-
-        return $this->client;
     }
 }

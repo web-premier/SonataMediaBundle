@@ -11,8 +11,6 @@
 
 namespace Sonata\MediaBundle\Tests\Command;
 
-use Sonata\ClassificationBundle\Model\CategoryManagerInterface;
-use Sonata\ClassificationBundle\Model\ContextManagerInterface;
 use Sonata\MediaBundle\Command\FixMediaContextCommand;
 use Sonata\MediaBundle\Provider\Pool;
 use Symfony\Component\Console\Application;
@@ -47,20 +45,29 @@ class FixMediaContextCommandTest extends CommandTest
     private $pool;
 
     /**
-     * @var \PHPUnit_Framework_MockObject_MockObject|ContextManagerInterface
+     * @var \PHPUnit_Framework_MockObject_MockObject|\Sonata\ClassificationBundle\Model\ContextManagerInterface
      */
     private $contextManger;
 
     /**
-     * @var \PHPUnit_Framework_MockObject_MockObject|CategoryManagerInterface
+     * @var \PHPUnit_Framework_MockObject_MockObject|\Sonata\ClassificationBundle\Model\CategoryManagerInterface
      */
     private $categoryManger;
 
     /**
      * {@inheritdoc}
      */
-    protected function setUp()
+    public function setUp()
     {
+        if (
+            false === interface_exists('Sonata\ClassificationBundle\Model\ContextManagerInterface')
+            || false === interface_exists('Sonata\ClassificationBundle\Entity\CategoryManager')
+        ) {
+            $this->markTestSkipped(
+                'Sonata Classification is now optional. This test should be done by the developer in the application.'
+            );
+        }
+
         $this->container = $this->getMock('Symfony\Component\DependencyInjection\ContainerInterface');
 
         $this->command = new FixMediaContextCommand();
@@ -71,22 +78,22 @@ class FixMediaContextCommandTest extends CommandTest
 
         $this->tester = new CommandTester($this->application->find('sonata:media:fix-media-context'));
 
-        $this->pool = $pool = $this->getMockBuilder('Sonata\MediaBundle\Provider\Pool')->disableOriginalConstructor()->getMock();
+        $this->pool = $this->getMockBuilder('Sonata\MediaBundle\Provider\Pool')->disableOriginalConstructor()->getMock();
 
-        $this->contextManger = $contextManger = $this->getMock('Sonata\ClassificationBundle\Model\ContextManagerInterface');
+        $this->contextManger = $this->getMock('Sonata\ClassificationBundle\Model\ContextManagerInterface');
 
-        $this->categoryManger = $categoryManger = $this->getMockBuilder('Sonata\ClassificationBundle\Entity\CategoryManager')->disableOriginalConstructor()->getMock();
+        $this->categoryManger = $this->getMockBuilder('Sonata\ClassificationBundle\Entity\CategoryManager')->disableOriginalConstructor()->getMock();
 
         $this->container->expects($this->any())
             ->method('get')
-            ->will($this->returnCallback(function ($id) use ($pool, $contextManger, $categoryManger) {
+            ->will($this->returnCallback(function ($id) {
                 switch ($id) {
                     case 'sonata.media.pool':
-                        return $pool;
+                        return $this->pool;
                     case 'sonata.classification.manager.context':
-                        return $contextManger;
+                        return $this->contextManger;
                     case 'sonata.classification.manager.category':
-                        return $categoryManger;
+                        return $this->categoryManger;
                 }
 
                 return;
@@ -97,8 +104,8 @@ class FixMediaContextCommandTest extends CommandTest
     {
         $context = array(
             'providers' => array(),
-            'formats' => array(),
-            'download' => array(),
+            'formats'   => array(),
+            'download'  => array(),
         );
 
         $this->pool->expects($this->any())->method('getContexts')->will($this->returnValue(array('foo' => $context)));
@@ -111,7 +118,7 @@ class FixMediaContextCommandTest extends CommandTest
 
         $this->categoryManger->expects($this->once())->method('getRootCategory')->with($this->equalTo($contextModel))->will($this->returnValue($category));
 
-        $output = $this->tester->execute(array('command' => $this->command->getName()));
+        $output = $this->tester->execute(array());
 
         $this->assertRegExp('@Done!@', $this->tester->getDisplay());
 
@@ -122,8 +129,8 @@ class FixMediaContextCommandTest extends CommandTest
     {
         $context = array(
             'providers' => array(),
-            'formats' => array(),
-            'download' => array(),
+            'formats'   => array(),
+            'download'  => array(),
         );
 
         $this->pool->expects($this->any())->method('getContexts')->will($this->returnValue(array('foo' => $context)));
@@ -138,7 +145,7 @@ class FixMediaContextCommandTest extends CommandTest
         $this->categoryManger->expects($this->once())->method('create')->will($this->returnValue($category));
         $this->categoryManger->expects($this->once())->method('save')->with($this->equalTo($category));
 
-        $output = $this->tester->execute(array('command' => $this->command->getName()));
+        $output = $this->tester->execute(array());
 
         $this->assertRegExp('@ > default category for \'foo\' is missing, creating one\s+Done!@', $this->tester->getDisplay());
 
@@ -149,8 +156,8 @@ class FixMediaContextCommandTest extends CommandTest
     {
         $context = array(
             'providers' => array(),
-            'formats' => array(),
-            'download' => array(),
+            'formats'   => array(),
+            'download'  => array(),
         );
 
         $this->pool->expects($this->any())->method('getContexts')->will($this->returnValue(array('foo' => $context)));
@@ -167,7 +174,7 @@ class FixMediaContextCommandTest extends CommandTest
         $this->categoryManger->expects($this->once())->method('create')->will($this->returnValue($category));
         $this->categoryManger->expects($this->once())->method('save')->with($this->equalTo($category));
 
-        $output = $this->tester->execute(array('command' => $this->command->getName()));
+        $output = $this->tester->execute(array());
 
         $this->assertRegExp('@ > default category for \'foo\' is missing, creating one\s+Done!@', $this->tester->getDisplay());
 

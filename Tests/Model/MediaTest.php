@@ -13,6 +13,13 @@ namespace Sonata\MediaBundle\Tests\Media;
 
 class MediaTest extends \PHPUnit_Framework_TestCase
 {
+    public function setUp()
+    {
+        if (false === interface_exists('Symfony\Component\Validator\ExecutionContextInterface')) {
+            $this->markTestSkipped('Test only available for < SF3.0');
+        }
+    }
+
     public function testSetMetadataValue()
     {
         $media = $this->getMedia(853);
@@ -24,9 +31,9 @@ class MediaTest extends \PHPUnit_Framework_TestCase
         $this->assertSame('value', $metadata['name'], 'the string value should be returned');
 
         $cropData = array(
-            'x' => 10,
-            'y' => 20,
-            'width' => 500,
+            'x'      => 10,
+            'y'      => 20,
+            'width'  => 500,
             'height' => 500,
         );
         $media->setMetadataValue('crop', $cropData);

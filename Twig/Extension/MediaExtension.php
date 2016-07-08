@@ -85,7 +85,7 @@ class MediaExtension extends \Twig_Extension implements \Twig_Extension_InitRunt
      *
      * @return string
      */
-    public function media($media, $format, $options = array())
+    public function media($media = null, $format, $options = array())
     {
         $media = $this->getMedia($media);
 
@@ -102,101 +102,10 @@ class MediaExtension extends \Twig_Extension implements \Twig_Extension_InitRunt
         $options = $provider->getHelperProperties($media, $format, $options);
 
         return $this->render($provider->getTemplate('helper_view'), array(
-            'media' => $media,
-            'format' => $format,
-            'options' => $options,
+            'media'    => $media,
+            'format'   => $format,
+            'options'  => $options,
         ));
-    }
-
-    /**
-     * Returns the thumbnail for the provided media.
-     *
-     * @param MediaInterface $media
-     * @param string         $format
-     * @param array          $options
-     *
-     * @return string
-     */
-    public function thumbnail($media, $format, $options = array())
-    {
-        $media = $this->getMedia($media);
-
-        if (!$media) {
-            return '';
-        }
-
-        $provider = $this->getMediaService()
-           ->getProvider($media->getProviderName());
-
-        $format = $provider->getFormatName($media, $format);
-        $format_definition = $provider->getFormat($format);
-
-        // build option
-        $defaultOptions = array(
-            'title' => $media->getName(),
-            'alt' => $media->getName(),
-        );
-
-        if ($format_definition['width']) {
-            $defaultOptions['width'] = $format_definition['width'];
-        }
-        if ($format_definition['height']) {
-            $defaultOptions['height'] = $format_definition['height'];
-        }
-
-        $options = array_merge($defaultOptions, $options);
-
-        $options = $provider->getHelperProperties($media, $format, $options);
-
-        return $this->render($provider->getTemplate('helper_thumbnail'), array(
-            'media' => $media,
-            'options' => $options,
-        ));
-    }
-
-    /**
-     * @param string $template
-     * @param array  $parameters
-     *
-     * @return mixed
-     */
-    public function render($template, array $parameters = array())
-    {
-        if (!isset($this->resources[$template])) {
-            $this->resources[$template] = $this->environment->loadTemplate($template);
-        }
-
-        return $this->resources[$template]->render($parameters);
-    }
-
-    /**
-     * @param MediaInterface $media
-     * @param string         $format
-     *
-     * @return string
-     */
-    public function path($media, $format)
-    {
-        $media = $this->getMedia($media);
-
-        if (!$media) {
-            return '';
-        }
-
-        $provider = $this->getMediaService()
-           ->getProvider($media->getProviderName());
-
-        $format = $provider->getFormatName($media, $format);
-
-        return $provider->generatePublicUrl($media, $format);
-    }
-
-    /**
-     * @return Pool
-     */
-    public function getMediaService()
-    {
-        return $this->mediaService;
     }
 
     /**
@@ -221,5 +130,95 @@ class MediaExtension extends \Twig_Extension implements \Twig_Extension_InitRunt
         }
 
         return $media;
+    }
+
+    /**
+     * Returns the thumbnail for the provided media.
+     *
+     * @param MediaInterface $media
+     * @param string         $format
+     * @param array          $options
+     *
+     * @return string
+     */
+    public function thumbnail($media = null, $format, $options = array())
+    {
+        $media = $this->getMedia($media);
+
+        if (!$media) {
+            return '';
+        }
+
+        $provider = $this->getMediaService()
+           ->getProvider($media->getProviderName());
+
+        $format = $provider->getFormatName($media, $format);
+        $format_definition = $provider->getFormat($format);
+
+        // build option
+        $defaultOptions = array(
+            'title' => $media->getName(),
+        );
+
+        if ($format_definition['width']) {
+            $defaultOptions['width'] = $format_definition['width'];
+        }
+        if ($format_definition['height']) {
+            $defaultOptions['height'] = $format_definition['height'];
+        }
+
+        $options = array_merge($defaultOptions, $options);
+
+        $options = $provider->getHelperProperties($media, $format, $options);
+
+        return $this->render($provider->getTemplate('helper_thumbnail'), array(
+            'media'    => $media,
+            'options'  => $options,
+        ));
+    }
+
+    /**
+     * @param string $template
+     * @param array  $parameters
+     *
+     * @return mixed
+     */
+    public function render($template, array $parameters = array())
+    {
+        if (!isset($this->resources[$template])) {
+            $this->resources[$template] = $this->environment->loadTemplate($template);
+        }
+
+        return $this->resources[$template]->render($parameters);
+    }
+
+    /**
+     * @param MediaInterface $media
+     * @param string         $format
+     *
+     * @return string
+     */
+    public function path($media = null, $format)
+    {
+        $media = $this->getMedia($media);
+
+        if (!$media) {
+            return '';
+        }
+
+        $provider = $this->getMediaService()
+           ->getProvider($media->getProviderName());
+
+        $format = $provider->getFormatName($media, $format);
+
+        return $provider->generatePublicUrl($media, $format);
+    }
+
+    /**
+     * @return Pool
+     */
+    public function getMediaService()
+    {
+        return $this->mediaService;
     }
 }

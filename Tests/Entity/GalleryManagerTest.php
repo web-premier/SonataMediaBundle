@@ -22,6 +22,20 @@ use Sonata\MediaBundle\Entity\GalleryManager;
  */
 class GalleryManagerTest extends \PHPUnit_Framework_TestCase
 {
+    protected function getGalleryManager($qbCallback)
+    {
+        $em = EntityManagerMockFactory::create($this, $qbCallback, array(
+            'name',
+            'context',
+            'enabled',
+        ));
+
+        $registry = $this->getMock('Doctrine\Common\Persistence\ManagerRegistry');
+        $registry->expects($this->any())->method('getManagerForClass')->will($this->returnValue($em));
+
+        return new GalleryManager('Sonata\MediaBundle\Entity\BaseGallery', $registry);
+    }
+
     public function testGetPager()
     {
         $self = $this;
@@ -45,8 +59,7 @@ class GalleryManagerTest extends \PHPUnit_Framework_TestCase
     {
         $self = $this;
         $this
-            ->getGalleryManager(function ($qb) use ($self) {
-            })
+            ->getGalleryManager(function ($qb) use ($self) {})
             ->getPager(array(), 1, 10, array('invalid' => 'ASC'));
     }
 
@@ -69,8 +82,8 @@ class GalleryManagerTest extends \PHPUnit_Framework_TestCase
                 $qb->expects($self->once())->method('setParameters')->with($self->equalTo(array()));
             })
             ->getPager(array(), 1, 10, array(
-                'name' => 'ASC',
-                'context' => 'DESC',
+                'name'     => 'ASC',
+                'context'  => 'DESC',
             ));
     }
 
@@ -94,19 +107,5 @@ class GalleryManagerTest extends \PHPUnit_Framework_TestCase
                 $qb->expects($self->once())->method('setParameters')->with($self->equalTo(array('enabled' => false)));
             })
             ->getPager(array('enabled' => false), 1);
-    }
-
-    protected function getGalleryManager($qbCallback)
-    {
-        $em = EntityManagerMockFactory::create($this, $qbCallback, array(
-            'name',
-            'context',
-            'enabled',
-        ));
-
-        $registry = $this->getMock('Doctrine\Common\Persistence\ManagerRegistry');
-        $registry->expects($this->any())->method('getManagerForClass')->will($this->returnValue($em));
-
-        return new GalleryManager('Sonata\MediaBundle\Entity\BaseGallery', $registry);
     }
 }

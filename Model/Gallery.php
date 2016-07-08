@@ -53,14 +53,6 @@ abstract class Gallery implements GalleryInterface
     /**
      * {@inheritdoc}
      */
-    public function __toString()
-    {
-        return $this->getName() ?: '-';
-    }
-
-    /**
-     * {@inheritdoc}
-     */
     public function setName($name)
     {
         $this->name = $name;
@@ -166,6 +158,14 @@ abstract class Gallery implements GalleryInterface
         $galleryHasMedia->setGallery($this);
 
         $this->galleryHasMedias[] = $galleryHasMedia;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function __toString()
+    {
+        return $this->getName() ?: '-';
     }
 
     /**

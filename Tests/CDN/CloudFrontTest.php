@@ -16,10 +16,7 @@ namespace Sonata\MediaBundle\Tests\CDN;
  */
 class CloudFrontTest extends \PHPUnit_Framework_TestCase
 {
-    /**
-     * @group legacy
-     */
-    public function testLegacyCloudFront()
+    public function testCloudFront()
     {
         $client = $this->getMock('CloudFrontClientSpy', array('createInvalidation'), array(), '', false);
         $client->expects($this->exactly(3))->method('createInvalidation')->will($this->returnValue(new CloudFrontResultSpy()));
@@ -39,10 +36,7 @@ class CloudFrontTest extends \PHPUnit_Framework_TestCase
         $cloudFront->flushPaths(array($path));
     }
 
-    /**
-     * @group legacy
-     */
-    public function testLegacyException()
+    public function testException()
     {
         $this->setExpectedException('\RuntimeException', 'Unable to flush : ');
         $client = $this->getMock('CloudFrontClientSpy', array('createInvalidation'), array(), '', false);

@@ -64,6 +64,7 @@ class GalleryAdmin extends BaseGalleryAdmin
 //            ->add('name')
 //            ->add('enabled')
 //            ->add('context')
+        ;
     }
 
     /**

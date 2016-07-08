@@ -11,11 +11,12 @@
 
 namespace Sonata\MediaBundle\Controller\Api;
 
-use FOS\RestBundle\Context\Context;
+use FOS\RestBundle\Controller\Annotations\QueryParam;
 use FOS\RestBundle\Controller\Annotations\View;
 use FOS\RestBundle\Request\ParamFetcherInterface;
 use FOS\RestBundle\View\View as FOSRestView;
 use JMS\Serializer\SerializationContext;
+use Nelmio\ApiDocBundle\Annotation\ApiDoc;
 use Sonata\DatagridBundle\Pager\PagerInterface;
 use Sonata\MediaBundle\Model\GalleryHasMediaInterface;
 use Sonata\MediaBundle\Model\GalleryInterface;
@@ -64,9 +65,9 @@ class GalleryController
      */
     public function __construct(GalleryManagerInterface $galleryManager, MediaManagerInterface $mediaManager, FormFactoryInterface $formFactory, $galleryHasMediaClass)
     {
-        $this->galleryManager = $galleryManager;
-        $this->mediaManager = $mediaManager;
-        $this->formFactory = $formFactory;
+        $this->galleryManager       = $galleryManager;
+        $this->mediaManager         = $mediaManager;
+        $this->formFactory          = $formFactory;
         $this->galleryHasMediaClass = $galleryHasMediaClass;
     }
 
@@ -95,9 +96,9 @@ class GalleryController
             'enabled' => '',
         );
 
-        $page = $paramFetcher->get('page');
-        $limit = $paramFetcher->get('count');
-        $sort = $paramFetcher->get('orderBy');
+        $page    = $paramFetcher->get('page');
+        $limit   = $paramFetcher->get('count');
+        $sort    = $paramFetcher->get('orderBy');
         $criteria = array_intersect_key($paramFetcher->all(), $supportedCriteria);
 
         foreach ($criteria as $key => $value) {
@@ -327,6 +328,43 @@ class GalleryController
     }
 
     /**
+     * Write a GalleryHasMedia, this method is used by both POST and PUT action methods.
+     *
+     * @param GalleryInterface         $gallery
+     * @param MediaInterface           $media
+     * @param GalleryHasMediaInterface $galleryHasMedia
+     * @param Request                  $request
+     *
+     * @return FormInterface
+     */
+    protected function handleWriteGalleryhasmedia(GalleryInterface $gallery, MediaInterface $media, GalleryHasMediaInterface $galleryHasMedia = null, Request $request)
+    {
+        $form = $this->formFactory->createNamed(null, 'sonata_media_api_form_gallery_has_media', $galleryHasMedia, array(
+            'csrf_protection' => false,
+        ));
+
+        $form->handleRequest($request);
+
+        if ($form->isValid()) {
+            $galleryHasMedia = $form->getData();
+            $galleryHasMedia->setMedia($media);
+
+            $gallery->addGalleryHasMedias($galleryHasMedia);
+            $this->galleryManager->save($gallery);
+
+            $view = FOSRestView::create($galleryHasMedia);
+            $serializationContext = SerializationContext::create();
+            $serializationContext->setGroups(array('sonata_api_read'));
+            $serializationContext->enableMaxDepthChecks();
+            $view->setSerializationContext($serializationContext);
+
+            return $view;
+        }
+
+        return $form;
+    }
+
+    /**
      * Deletes a media association to a gallery.
      *
      * @ApiDoc(
@@ -394,52 +432,6 @@ class GalleryController
         $this->galleryManager->delete($gallery);
 
         return array('deleted' => true);
-    }
-
-    /**
-     * Write a GalleryHasMedia, this method is used by both POST and PUT action methods.
-     *
-     * @param GalleryInterface         $gallery
-     * @param MediaInterface           $media
-     * @param GalleryHasMediaInterface $galleryHasMedia
-     * @param Request                  $request
-     *
-     * @return FormInterface
-     */
-    protected function handleWriteGalleryhasmedia(GalleryInterface $gallery, MediaInterface $media, GalleryHasMediaInterface $galleryHasMedia = null, Request $request)
-    {
-        $form = $this->formFactory->createNamed(null, 'sonata_media_api_form_gallery_has_media', $galleryHasMedia, array(
-            'csrf_protection' => false,
-        ));
-
-        $form->handleRequest($request);
-
-        if ($form->isValid()) {
-            $galleryHasMedia = $form->getData();
-            $galleryHasMedia->setMedia($media);
-
-            $gallery->addGalleryHasMedias($galleryHasMedia);
-            $this->galleryManager->save($gallery);
-
-            $view = FOSRestView::create($galleryHasMedia);
-
-            // BC for FOSRestBundle < 2.0
-            if (method_exists($view, 'setSerializationContext')) {
-                $serializationContext = SerializationContext::create();
-                $serializationContext->setGroups(array('sonata_api_read'));
-                $serializationContext->enableMaxDepthChecks();
-                $view->setSerializationContext($serializationContext);
-            } else {
-                $context = new Context();
-                $context->setGroups(array('sonata_api_read'));
-                $context->setMaxDepth(0);
-                $view->setContext($context);
-            }
-
-            return $view;
-        }
-
-        return $form;
     }
 
     /**
@@ -514,26 +506,17 @@ class GalleryController
             'csrf_protection' => false,
         ));
 
-        $form->handleRequest($request);
+        $form->bind($request);
 
         if ($form->isValid()) {
             $gallery = $form->getData();
             $this->galleryManager->save($gallery);
 
             $view = FOSRestView::create($gallery);
-
-            // BC for FOSRestBundle < 2.0
-            if (method_exists($view, 'setSerializationContext')) {
-                $serializationContext = SerializationContext::create();
-                $serializationContext->setGroups(array('sonata_api_read'));
-                $serializationContext->enableMaxDepthChecks();
-                $view->setSerializationContext($serializationContext);
-            } else {
-                $context = new Context();
-                $context->setGroups(array('sonata_api_read'));
-                $context->setMaxDepth(0);
-                $view->setContext($context);
-            }
+            $serializationContext = SerializationContext::create();
+            $serializationContext->setGroups(array('sonata_api_read'));
+            $serializationContext->enableMaxDepthChecks();
+            $view->setSerializationContext($serializationContext);
 
             return $view;
         }

@@ -11,7 +11,6 @@
 
 namespace Sonata\MediaBundle\Controller\Api;
 
-use FOS\RestBundle\Context\Context;
 use FOS\RestBundle\Controller\Annotations\QueryParam;
 use FOS\RestBundle\Controller\Annotations\Route;
 use FOS\RestBundle\Controller\Annotations\View;
@@ -67,8 +66,8 @@ class MediaController
     public function __construct(MediaManagerInterface $mediaManager, Pool $mediaPool, FormFactoryInterface $formFactory)
     {
         $this->mediaManager = $mediaManager;
-        $this->mediaPool = $mediaPool;
-        $this->formFactory = $formFactory;
+        $this->mediaPool    = $mediaPool;
+        $this->formFactory  = $formFactory;
     }
 
     /**
@@ -96,9 +95,9 @@ class MediaController
             'enabled' => '',
         );
 
-        $page = $paramFetcher->get('page');
-        $limit = $paramFetcher->get('count');
-        $sort = $paramFetcher->get('orderBy');
+        $page    = $paramFetcher->get('page');
+        $limit   = $paramFetcher->get('count');
+        $sort    = $paramFetcher->get('orderBy');
         $criteria = array_intersect_key($paramFetcher->all(), $supportedCriteria);
 
         foreach ($criteria as $key => $value) {
@@ -169,7 +168,7 @@ class MediaController
 
         $properties = array();
         foreach ($formats as $format) {
-            $properties[$format]['url'] = $provider->generatePublicUrl($media, $format);
+            $properties[$format]['url']        = $provider->generatePublicUrl($media, $format);
             $properties[$format]['properties'] = $provider->getHelperProperties($media, $format);
         }
 
@@ -384,7 +383,7 @@ class MediaController
     protected function handleWriteMedium(Request $request, MediaInterface $media, MediaProviderInterface $provider)
     {
         $form = $this->formFactory->createNamed(null, 'sonata_media_api_form_media', $media, array(
-            'provider_name' => $provider->getName(),
+            'provider_name'   => $provider->getName(),
             'csrf_protection' => false,
         ));
 
@@ -395,19 +394,10 @@ class MediaController
             $this->mediaManager->save($media);
 
             $view = FOSRestView::create($media);
-
-            // BC for FOSRestBundle < 2.0
-            if (method_exists($view, 'setSerializationContext')) {
-                $serializationContext = SerializationContext::create();
-                $serializationContext->setGroups(array('sonata_api_read'));
-                $serializationContext->enableMaxDepthChecks();
-                $view->setSerializationContext($serializationContext);
-            } else {
-                $context = new Context();
-                $context->setGroups(array('sonata_api_read'));
-                $context->setMaxDepth(0);
-                $view->setContext($context);
-            }
+            $serializationContext = SerializationContext::create();
+            $serializationContext->setGroups(array('sonata_api_read'));
+            $serializationContext->enableMaxDepthChecks();
+            $view->setSerializationContext($serializationContext);
 
             return $view;
         }

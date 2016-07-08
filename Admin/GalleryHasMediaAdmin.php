@@ -11,11 +11,11 @@
 
 namespace Sonata\MediaBundle\Admin;
 
-use Sonata\AdminBundle\Admin\AbstractAdmin;
+use Sonata\AdminBundle\Admin\Admin;
 use Sonata\AdminBundle\Datagrid\ListMapper;
 use Sonata\AdminBundle\Form\FormMapper;
 
-class GalleryHasMediaAdmin extends AbstractAdmin
+class GalleryHasMediaAdmin extends Admin
 {
     /**
      * {@inheritdoc}

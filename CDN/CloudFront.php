@@ -129,9 +129,9 @@ class CloudFront implements CDNInterface
         try {
             $result = $this->getClient()->createInvalidation(array(
                 'DistributionId' => $this->distributionId,
-                'Paths' => array(
+                'Paths'          => array(
                     'Quantity' => count($normalizedPaths),
-                    'Items' => $normalizedPaths,
+                    'Items'    => $normalizedPaths,
                 ),
                 'CallerReference' => $this->getCallerReference($normalizedPaths),
             ));
@@ -147,6 +147,23 @@ class CloudFront implements CDNInterface
     }
 
     /**
+     * Return a CloudFrontClient.
+     *
+     * @return CloudFrontClient
+     */
+    private function getClient()
+    {
+        if (!$this->client) {
+            $this->client = CloudFrontClient::factory(array(
+                'key'    => $this->key,
+                'secret' => $this->secret,
+            ));
+        }
+
+        return $this->client;
+    }
+
+    /**
      * For testing only.
      *
      * @param CloudFrontClient $client
@@ -154,44 +171,10 @@ class CloudFront implements CDNInterface
     public function setClient($client)
     {
         if (!$client instanceof CloudFrontClient) {
-            @trigger_error('The '.__METHOD__.' expects a CloudFrontClient as parameter.', E_USER_DEPRECATED);
+            trigger_error('The '.__METHOD__.' expects a CloudFrontClient as parameter.', E_USER_DEPRECATED);
         }
 
         $this->client = $client;
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public function getFlushStatus($identifier)
-    {
-        try {
-            $result = $this->getClient()->getInvalidation(array(
-                'DistributionId' => $this->distributionId,
-                'Id' => $identifier,
-            ));
-
-            return array_search($result->get('Status'), self::getStatusList());
-        } catch (CloudFrontException $ex) {
-            throw new \RuntimeException('Unable to retrieve flush status : '.$ex->getMessage());
-        }
-    }
-
-    /**
-     * @static
-     *
-     * @return string[]
-     */
-    public static function getStatusList()
-    {
-        // @todo: check for a complete list of available CloudFront statuses
-        return array(
-            self::STATUS_OK => 'Completed',
-            self::STATUS_TO_SEND => 'STATUS_TO_SEND',
-            self::STATUS_TO_FLUSH => 'STATUS_TO_FLUSH',
-            self::STATUS_ERROR => 'STATUS_ERROR',
-            self::STATUS_WAITING => 'InProgress',
-        );
     }
 
     /**
@@ -209,19 +192,36 @@ class CloudFront implements CDNInterface
     }
 
     /**
-     * Return a CloudFrontClient.
-     *
-     * @return CloudFrontClient
+     * {@inheritdoc}
      */
-    private function getClient()
+    public function getFlushStatus($identifier)
     {
-        if (!$this->client) {
-            $this->client = CloudFrontClient::factory(array(
-                'key' => $this->key,
-                'secret' => $this->secret,
+        try {
+            $result = $this->getClient()->getInvalidation(array(
+                'DistributionId' => $this->distributionId,
+                'Id'             => $identifier,
             ));
-        }
 
-        return $this->client;
+            return array_search($result->get('Status'), self::getStatusList());
+        } catch (CloudFrontException $ex) {
+            throw new \RuntimeException('Unable to retrieve flush status : '.$ex->getMessage());
+        }
+    }
+
+    /**
+     * @static
+     *
+     * @return string[]
+     */
+    public static function getStatusList()
+    {
+        // @todo: check for a complete list of available CloudFront statuses
+        return array(
+            self::STATUS_OK       => 'Completed',
+            self::STATUS_TO_SEND  => 'STATUS_TO_SEND',
+            self::STATUS_TO_FLUSH => 'STATUS_TO_FLUSH',
+            self::STATUS_ERROR    => 'STATUS_ERROR',
+            self::STATUS_WAITING  => 'InProgress',
+        );
     }
 }
