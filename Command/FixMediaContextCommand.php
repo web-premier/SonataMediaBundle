@@ -11,7 +11,6 @@
 
 namespace Sonata\MediaBundle\Command;
 
-use Sonata\ClassificationBundle\Model\ContextInterface;
 use Symfony\Bundle\FrameworkBundle\Command\ContainerAwareCommand;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -32,12 +31,19 @@ class FixMediaContextCommand extends ContainerAwareCommand
      */
     public function execute(InputInterface $input, OutputInterface $output)
     {
+        if (false === $this->getContainer()->has('sonata.classification.manager.category')
+            || false === $this->getContainer()->get('sonata.classification.manager.context')) {
+                throw new \LogicException(
+                    'There is no sonata.classification.manager.category || sonata.classification.manager.context defined.'
+                );
+         }
+
         $pool = $this->getContainer()->get('sonata.media.pool');
         $contextManager = $this->getContainer()->get('sonata.classification.manager.context');
         $cateoryManager = $this->getContainer()->get('sonata.classification.manager.category');
 
         foreach ($pool->getContexts() as $context => $contextAttrs) {
-            /** @var ContextInterface $defaultContext */
+            /** @var \Sonata\ClassificationBundle\Model\ContextInterface $defaultContext */
             $defaultContext = $contextManager->findOneBy(array(
                 'id' => $context,
             ));
